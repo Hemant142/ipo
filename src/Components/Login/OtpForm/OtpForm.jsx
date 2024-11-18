@@ -1,41 +1,30 @@
-import * as React from 'react';
-import { Box, Button, FormControl, FormLabel, Typography, Snackbar, Alert } from '@mui/material';
-import { otpVarificationManager, requestOTP } from '../../../Redux/authReducer/action';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import Cookies from 'js-cookie';
-import OTP from '../OTP/OTP';
+import React, { useEffect, useState } from "react";
+import { Box, Button, FormControl, FormLabel, Typography, Snackbar, Alert, CircularProgress } from "@mui/material";
+import { otpVarificationManager } from "../../../Redux/authReducer/action";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import Cookies from "js-cookie";
+import OTP from "../OTP/OTP";
 
-export default function OtpForm({ authToken, setFlipLoginBox }) {
+export default function OtpForm({ authToken, onResendOTP, timer, setTimer, isResendingOTP }) {
   const [otp, setOtp] = React.useState("");
-  const [timer, setTimer] = React.useState(60);
   const [openSnackbar, setOpenSnackbar] = React.useState(false);
-  const [snackbarMessage, setSnackbarMessage] = React.useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = React.useState('success');
+  const [isOtpVerification, setIsOtpVerification] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState("success");
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (timer > 0) {
       const countdown = setInterval(() => setTimer((prev) => prev - 1), 1000);
       return () => clearInterval(countdown);
     }
-  }, [timer]);
+  }, [timer, setTimer]);
 
   const resendOtp = () => {
     setOtp("");
-    dispatch(requestOTP(authToken))
-      .then(() => {
-        setSnackbarMessage("OTP sent successfully!");
-        setSnackbarSeverity("success");
-        setOpenSnackbar(true);
-        setTimer(60);
-      })
-      .catch(() => {
-        setSnackbarMessage("Failed to resend OTP.");
-        setSnackbarSeverity("error");
-        setOpenSnackbar(true);
-      });
+    onResendOTP();
   };
 
   const handleOtpSubmit = (e) => {
@@ -51,19 +40,16 @@ export default function OtpForm({ authToken, setFlipLoginBox }) {
       return;
     }
 
-    const data = {
-      otp: otpValue,
-    };
-
+    const data = { otp: otpValue };
+    setIsOtpVerification(true);
     dispatch(otpVarificationManager(data, authToken))
       .then((response) => {
-        console.log(response.data.data.otp_access_token,"otpVarificationManager")
         if (response.data.status === "success") {
           Cookies.set("login_token_ipo", `${response.data.data.otp_access_token}`);
-       
           setSnackbarMessage("OTP verified successfully!");
           setSnackbarSeverity("success");
           setOpenSnackbar(true);
+          setIsOtpVerification(false);
 
           setTimeout(() => {
             setSnackbarMessage("Login successful");
@@ -76,13 +62,14 @@ export default function OtpForm({ authToken, setFlipLoginBox }) {
           setSnackbarMessage(errorMessage);
           setSnackbarSeverity("warning");
           setOpenSnackbar(true);
+          setIsOtpVerification(false);
         }
       })
       .catch((error) => {
-        console.log(error.response.data.detail,"Error")
-        setSnackbarMessage(error.response.data.detail);
+        setSnackbarMessage(error.response?.data?.detail || "Verification failed");
         setSnackbarSeverity("error");
         setOpenSnackbar(true);
+        setIsOtpVerification(false);
       });
   };
 
@@ -98,7 +85,7 @@ export default function OtpForm({ authToken, setFlipLoginBox }) {
         borderRadius: "16px",
         boxShadow: "0px 5px 12.1px 0px #758DE594",
         maxWidth: "400px",
-        margin: "auto"
+        margin: "auto",
       }}
     >
       <Typography variant="h6" sx={{ textAlign: "center", color: "#244C9B" }}>
@@ -125,8 +112,13 @@ export default function OtpForm({ authToken, setFlipLoginBox }) {
             color: "#fff",
             ":hover": { backgroundColor: "#5f8aeb" },
           }}
+          disabled={isOtpVerification}
         >
-          Verify OTP
+          {isOtpVerification ? (
+            <CircularProgress size={24} sx={{ color: "#fff" }} />
+          ) : (
+            "Verify OTP"
+          )}
         </Button>
         <Button
           sx={{
@@ -136,13 +128,19 @@ export default function OtpForm({ authToken, setFlipLoginBox }) {
             ":hover": { textDecoration: "underline" },
           }}
           onClick={resendOtp}
-          disabled={timer > 0}
+          disabled={timer > 0 || isResendingOTP}
         >
-          {timer > 0 ? `Resend OTP in ${timer}s` : "Resend OTP"}
+          {isResendingOTP ? (
+            <CircularProgress size={20} sx={{ color: "#244c9c" }} />
+          ) : timer > 0 ? (
+            `Resend OTP in ${timer}s`
+          ) : (
+            "Resend OTP"
+          )}
         </Button>
       </form>
       <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: "100%" }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>

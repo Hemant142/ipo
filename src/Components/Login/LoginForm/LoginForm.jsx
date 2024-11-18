@@ -1,49 +1,34 @@
-import { AccountCircle, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
-import { Box, Button, FormControl, FormLabel, Input, InputAdornment, Typography, Snackbar, Alert } from '@mui/material';
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { gernateOTP, requestOTP } from '../../../Redux/authReducer/action';
+import { AccountCircle, Lock, Visibility, VisibilityOff } from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  FormControl,
+  FormLabel,
+  Input,
+  InputAdornment,
+  Typography,
+} from "@mui/material";
+import React, { useState } from "react";
 
-export default function LoginForm({ setFlipLoginBox, setAuthToken, setTimer, setOtpSent }) {
-  const [formData, setFormData] = useState({ userId: "", password: "" });
+export default function LoginForm({ formData, setFormData, onLoginSubmit ,isSubmitting }) {
   const [showPassword, setShowPassword] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("info");
+ 
 
-  const dispatch = useDispatch();
+  const isFormValid = formData.userId.trim() !== "" && formData.password.trim() !== ""; // Check if fields are filled
 
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
-
-  const showSnackbar = (message, severity) => {
-    setSnackbarMessage(message);
-    setSnackbarSeverity(severity);
-    setSnackbarOpen(true);
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(gernateOTP(formData))
-      .then((res) => {
-      console.log(res,"RESponse gernateOTP")
-        if (res.data.status === "failed") {
-          showSnackbar(res.data.message, "error");
-        } else if (res.data.status === "success") {
-          const token = res.data.data.otp_access_token;
-          setAuthToken(token);
-
-          showSnackbar("Please Wait", "success");
-          setFlipLoginBox(true); // Flip the login box to show OTP verification
-        }
-      })
-      .catch((error) => {
-        const errorMessage = error.response?.data?.detail || "Login failed";
-        showSnackbar(errorMessage, "error");
-      });
+    if (!isFormValid) return; // Prevent submission if form is invalid
+  
+    try {
+      await onLoginSubmit(); // Trigger the parent's login function
+    } catch (error) {
+      console.error("Error during login submission:", error);
+    }
   };
+  
+  console.log(isSubmitting,"isSubmitting")
 
   return (
     <Box
@@ -60,22 +45,30 @@ export default function LoginForm({ setFlipLoginBox, setAuthToken, setTimer, set
         IPO Login
       </Typography>
       <form onSubmit={handleSubmit}>
-        <FormControl fullWidth sx={{ marginBottom: "20px" }}>
+        <FormControl fullWidth sx={{ marginBottom: "20px" }} required>
           <FormLabel>User ID</FormLabel>
           <Input
             value={formData.userId}
             onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-            startAdornment={<InputAdornment position="start"><AccountCircle /></InputAdornment>}
+            startAdornment={
+              <InputAdornment position="start">
+                <AccountCircle />
+              </InputAdornment>
+            }
             placeholder="Enter Your User ID"
           />
         </FormControl>
 
-        <FormControl fullWidth sx={{ marginBottom: "20px" }}>
+        <FormControl fullWidth sx={{ marginBottom: "20px" }} required>
           <FormLabel>Password</FormLabel>
           <Input
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            startAdornment={<InputAdornment position="start"><Lock /></InputAdornment>}
+            startAdornment={
+              <InputAdornment position="start">
+                <Lock />
+              </InputAdornment>
+            }
             endAdornment={
               <InputAdornment position="end" onClick={() => setShowPassword(!showPassword)}>
                 {showPassword ? <Visibility /> : <VisibilityOff />}
@@ -86,28 +79,19 @@ export default function LoginForm({ setFlipLoginBox, setAuthToken, setTimer, set
           />
         </FormControl>
 
-        <Button type="submit" fullWidth sx={{ backgroundColor: "#758DE5", color: "#fff", ":hover": { backgroundColor: "#5f8aeb" } }}>
-          Get OTP
-        </Button>
         <Button
-          sx={{ marginTop: "10px", textAlign: "center", color: "#244c9c", ":hover": { textDecoration: "underline" } }}
-          onClick={() => setFlipLoginBox(true)}
+          type="submit"
+          fullWidth
+          disabled={!isFormValid || isSubmitting} // Disable button if invalid or loading
+          sx={{
+            backgroundColor: isSubmitting ? "#d3d3d3" : isFormValid ? "#758DE5" : "#d3d3d3",
+            color: "#fff",
+            ":hover": { backgroundColor: isSubmitting || !isFormValid ? "#d3d3d3" : "#5f8aeb" },
+          }}
         >
-          Forgot Password?
+          {isSubmitting ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Get OTP"}
         </Button>
       </form>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={2000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

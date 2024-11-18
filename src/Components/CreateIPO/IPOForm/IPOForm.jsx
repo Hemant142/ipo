@@ -172,7 +172,7 @@ const IPOForm = () => {
 
           <Grid item xs={12}>
             <Autocomplete
-              options={["IPO", "FPO"]}
+              options={["IPO", "SME"]}
               value={formData.ipoType}
               onChange={handleAutoCompleteChange}
               renderInput={(params) => (
@@ -199,7 +199,7 @@ const IPOForm = () => {
             { name: "maxLotSize", label: "Max Lot Size" },
             { name: "lowerPrice", label: "Lower Price (₹)" },
             { name: "higherPrice", label: "Higher Price (₹)" },
-            { name: "cutoffTime", label: "Cutoff Time" },
+            { name: "cutoffTime", label: "Cutoff Rate" },
           ].map((field) => (
             <Grid item xs={6} key={field.name}>
               <TextField
@@ -221,7 +221,6 @@ const IPOForm = () => {
           ))}
 
           {[
-            { name: "preDate", label: "Pre Date" },
             { name: "startDate", label: "Start Date" },
             { name: "endDate", label: "End Date" },
             { name: "allocationDate", label: "Allocation Date" },
