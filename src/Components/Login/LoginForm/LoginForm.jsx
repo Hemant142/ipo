@@ -19,6 +19,7 @@ export default function LoginForm({ formData, setFormData, onLoginSubmit ,isSubm
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (!isFormValid) return; // Prevent submission if form is invalid
   
     try {
@@ -28,7 +29,7 @@ export default function LoginForm({ formData, setFormData, onLoginSubmit ,isSubm
     }
   };
   
-  console.log(isSubmitting,"isSubmitting")
+
 
   return (
     <Box
