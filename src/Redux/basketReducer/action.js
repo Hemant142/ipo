@@ -42,7 +42,8 @@ const response = await axios.post(`${NewURL}dashboard/create-ipo`, data,{
 return response
 }
 catch(error) {
-    console.log(error)
+   return error
+
 }
 
 }

@@ -5,28 +5,21 @@ import LoginImage from "../Components/Login/LoginImage/LoginImage";
 import LoginForm from "../Components/Login/LoginForm/LoginForm";
 import OtpForm from "../Components/Login/OtpForm/OtpForm";
 import { gernateOTP } from "../Redux/authReducer/action";
+import CustomSnackbar from "../Components/CustomSnackbar/CustomSnackbar";
 
 export default function Login() {
   const [flipLoginBox, setFlipLoginBox] = useState(false);
   const [authToken, setAuthToken] = useState("");
   const [formData, setFormData] = useState({ userId: "", password: "" });
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("info");
   const [isSubmitting, setIsSubmitting] = useState(false); // State to manage button loading
   const [timer, setTimer] = useState(60);
+  const [snackbarConfig,setSnackbarConfig] = useState({
+    open :false,
+    message: "", 
+    severity : "info",
+  }) 
 
   const dispatch = useDispatch();
-
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
-
-  const showSnackbar = (message, severity) => {
-    setSnackbarMessage(message);
-    setSnackbarSeverity(severity);
-    setSnackbarOpen(true);
-  };
 
   const startTimer = () => {
     setTimer(60);
@@ -38,21 +31,35 @@ export default function Login() {
     dispatch(gernateOTP(formData))
       .then((res) => {
         if (res.data.status === "failed") {
-          showSnackbar(res.data.message, "error");
+          setSnackbarConfig({
+            open:true,
+            message: res.data.message,
+            severity :"error",
+          })
+          // showSnackbar(res.data.message, "error");
           setIsSubmitting(false)
         } else if (res.data.status === "success") {
           setIsSubmitting(false)
           const token = res.data.data.otp_access_token;
           setAuthToken(token);
-          showSnackbar("Please Wait", "success");
+          // showSnackbar("Please Wait", "success");
+          setSnackbarConfig({
+            open: true,
+            message: "OTP sent successfully! Please check your phone.",
+            severity: "success",
+          });
           setFlipLoginBox(true); // Flip the login box to show OTP verification
           startTimer(); // Start the timer on successful OTP generation
         }
       })
       .catch((error) => {
         setIsSubmitting(false)
-        const errorMessage = error.response?.data?.detail || "Login failed";
-        showSnackbar(errorMessage, "error");
+        const errorMessage = error.response?.data?.detail || "Login failed.";
+        setSnackbarConfig({
+          open: true,
+          message: errorMessage,
+          severity: "error",
+        });
       });
   };
 
@@ -68,7 +75,7 @@ export default function Login() {
             justifyContent: "center",
             alignItems: "center",
             height: "100%",
-          }}
+          }} 
         >
           <LoginImage />
         </Grid>
@@ -115,17 +122,16 @@ export default function Login() {
         </Grid>
       </Grid>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={2000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+      {/* Conditionally Render Custom Snackbar */}
+      {snackbarConfig.open && (
+        <CustomSnackbar
+          open={snackbarConfig.open}
+          message={snackbarConfig.message}
+          severity={snackbarConfig.severity}
+          onClose={() => setSnackbarConfig({ ...snackbarConfig, open: false })}
+        />
+      )}
     </Box>
   );
 }
+

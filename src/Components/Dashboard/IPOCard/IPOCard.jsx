@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Chip, Divider } from '@mui/material';
+import { Card, CardContent, Typography, Box, Chip, Divider, Tooltip } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import EventIcon from '@mui/icons-material/Event';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
@@ -11,6 +11,10 @@ const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
   padding: theme.spacing(3),
   transition: 'transform 0.2s ease-in-out',
+  height: '450px', // Fixed card height
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
   '&:hover': {
     transform: 'scale(1.03)',
     boxShadow: theme.shadows[10],
@@ -24,20 +28,53 @@ const StyledDivider = styled(Divider)(({ theme }) => ({
 }));
 
 export default function IPOCard({ basket }) {
-  const { ipoName, issueNumber, ipoType, issueSize, faceValue, lotSize, minLotSize, maxLotSize, 
-          lowerPrice, higherPrice, cutoffTime, startDate, endDate, allocationDate, 
-          listingDate, createdAt, isActive } = basket;
+  const {
+    ipoName,
+    issueNumber,
+    ipoType,
+    issueSize,
+    faceValue,
+    lotSize,
+    minLotSize,
+    maxLotSize,
+    lowerPrice,
+    higherPrice,
+    cutoffTime,
+    startDate,
+    endDate,
+    allocationDate,
+    listingDate,
+    createdAt,
+    isActive,
+  } = basket;
 
   const statusColor = isActive ? 'success' : 'error';
+
+  // Function to truncate long IPO names
+  const truncateName = (name, maxLength) =>
+    name.length > maxLength ? `${name.slice(0, maxLength)}...` : name;
 
   return (
     <StyledCard>
       <CardContent>
         {/* Header */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" fontWeight="bold" color="primary">
-            {ipoName}
-          </Typography>
+          <Tooltip title={ipoName} placement="top">
+            <Typography
+              variant="h6"
+              fontWeight="bold"
+              color="primary"
+              sx={{
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '180px', // Fix width for truncation
+                cursor: 'pointer',
+              }}
+            >
+              {truncateName(ipoName, 20)}
+            </Typography>
+          </Tooltip>
           <Chip label={isActive ? 'Active' : 'Inactive'} color={statusColor} variant="outlined" />
         </Box>
 
@@ -46,10 +83,11 @@ export default function IPOCard({ basket }) {
           <FormatListNumberedIcon fontSize="small" sx={{ mr: 1 }} /> Issue Number: {issueNumber}
         </Typography>
         <Typography variant="body1" color="textSecondary" display="flex" alignItems="center">
-          <AttachMoneyIcon fontSize="small" sx={{ mr: 1 }} /> Issue Size: ₹{Intl.NumberFormat().format(issueSize)}
+          <AttachMoneyIcon fontSize="small" sx={{ mr: 1 }} /> Issue Size: ₹
+          {Intl.NumberFormat().format(issueSize)}
         </Typography>
         <StyledDivider />
-        
+
         {/* IPO Info */}
         <Typography variant="body1" color="textSecondary" display="flex" alignItems="center">
           <TrendingUpIcon fontSize="small" sx={{ mr: 1 }} /> IPO Type: {ipoType}
@@ -58,12 +96,12 @@ export default function IPOCard({ basket }) {
           Face Value: ₹{faceValue}
         </Typography>
         <StyledDivider />
-        
+
         {/* Lot Size Info */}
         <Typography variant="body1" color="textSecondary">
           Lot Size: {lotSize} (Min: {minLotSize}, Max: {maxLotSize})
         </Typography>
-        
+
         {/* Price Range */}
         <Typography variant="body1" color="textSecondary">
           Price Range: ₹{lowerPrice} - ₹{higherPrice}
@@ -96,4 +134,3 @@ export default function IPOCard({ basket }) {
     </StyledCard>
   );
 }
- 

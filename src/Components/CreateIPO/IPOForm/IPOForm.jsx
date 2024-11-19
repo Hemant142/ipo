@@ -13,6 +13,7 @@ import {
 import Cookies from "js-cookie";
 import { useDispatch } from "react-redux";
 import { createIPO } from "../../../Redux/basketReducer/action";
+import CustomSnackbar from "../../CustomSnackbar/CustomSnackbar";
 
 const IPOForm = () => {
   const theme = useTheme();
@@ -31,7 +32,7 @@ const IPOForm = () => {
     lowerPrice: "",
     higherPrice: "",
     cutoffTime: "",
-    preDate: "",
+    preDate: "", // Initialize preDate here
     startDate: "",
     endDate: "",
     allocationDate: "",
@@ -39,8 +40,13 @@ const IPOForm = () => {
     isActive: true,
   });
 
+  const [snackbarConfig, setSnackbarConfig] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
   const [errors, setErrors] = useState({});
-  const [alert, setAlert] = useState({ open: false, message: "", severity: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
@@ -65,18 +71,26 @@ const IPOForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateFields()) return;
+
+    // if (!validateFields()) return;
 
     setIsSubmitting(true); // Disable the submit button
+
+    // Ensure preDate is explicitly set to an empty string
+    const submissionData = { ...formData, preDate: "" };
+
+
     try {
-      const response = await dispatch(createIPO(formData, token));
-      console.log(response,"response")
+      const response = await dispatch(createIPO(submissionData, token));
+    
+
       if (response.data.status === "success") {
-        setAlert({
+        setSnackbarConfig({
           open: true,
           message: "IPO created successfully!",
           severity: "success",
         });
+
         setFormData({
           ipoName: "",
           issueNumber: "",
@@ -97,14 +111,14 @@ const IPOForm = () => {
           isActive: true,
         });
       } else {
-        setAlert({
+        setSnackbarConfig({
           open: true,
           message: response.data.message,
           severity: "error",
         });
       }
     } catch (error) {
-      setAlert({
+      setSnackbarConfig({
         open: true,
         message: error.message || "Something went wrong.",
         severity: "error",
@@ -112,10 +126,6 @@ const IPOForm = () => {
     } finally {
       setIsSubmitting(false); // Re-enable the submit button
     }
-  };
-
-  const handleCloseAlert = () => {
-    setAlert({ ...alert, open: false });
   };
 
   return (
@@ -267,16 +277,15 @@ const IPOForm = () => {
         </Grid>
       </form>
 
-      <Snackbar
-        open={alert.open}
-        autoHideDuration={6000}
-        onClose={handleCloseAlert}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert onClose={handleCloseAlert} severity={alert.severity} sx={{ width: "100%" }}>
-          {alert.message}
-        </Alert>
-      </Snackbar>
+   
+      {snackbarConfig.open && (
+        <CustomSnackbar
+          open={snackbarConfig.open}
+          message={snackbarConfig.message}
+          severity={snackbarConfig.severity}
+          onClose={() => setSnackbarConfig({ ...snackbarConfig, open: false })}
+        />
+      )}
     </Box>
   );
 };

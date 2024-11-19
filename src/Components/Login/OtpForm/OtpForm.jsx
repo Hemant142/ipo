@@ -5,13 +5,16 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import Cookies from "js-cookie";
 import OTP from "../OTP/OTP";
+import CustomSnackbar from "../../CustomSnackbar/CustomSnackbar";
 
 export default function OtpForm({ authToken, onResendOTP, timer, setTimer, isResendingOTP }) {
   const [otp, setOtp] = React.useState("");
-  const [openSnackbar, setOpenSnackbar] = React.useState(false);
   const [isOtpVerification, setIsOtpVerification] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = React.useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = React.useState("success");
+  const [snackbarConfig,setSnackbarConfig] = useState({
+    open :false,
+    message: "", 
+    severity : "info",
+  }) 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -34,9 +37,11 @@ export default function OtpForm({ authToken, onResendOTP, timer, setTimer, isRes
 
   const handleOtpVerification = (otpValue) => {
     if (otpValue.length < 4) {
-      setSnackbarMessage("Please enter a valid OTP");
-      setSnackbarSeverity("error");
-      setOpenSnackbar(true);
+      setSnackbarConfig({
+        open :true, 
+        message: `OTP length is ${otpValue.length}. Please enter a valid OTP `, 
+        severity : 'error'
+      })
       return;
     }
 
@@ -46,36 +51,44 @@ export default function OtpForm({ authToken, onResendOTP, timer, setTimer, isRes
       .then((response) => {
         if (response.data.status === "success") {
           Cookies.set("login_token_ipo", `${response.data.data.otp_access_token}`);
-          setSnackbarMessage("OTP verified successfully!");
-          setSnackbarSeverity("success");
-          setOpenSnackbar(true);
+          setSnackbarConfig({
+            open :true, 
+            message: 'OTP verified successfully!', 
+            severity : 'success'
+          })
           setIsOtpVerification(false);
 
           setTimeout(() => {
-            setSnackbarMessage("Login successful");
-            setSnackbarSeverity("success");
-            setOpenSnackbar(true);
+            setSnackbarConfig({
+              open :true, 
+              message: 'Login successful', 
+              severity : 'success'
+            })
             navigate("/dashboard");
           }, 1000);
         } else {
           const errorMessage = response.data.message === "OTP Expired" ? "OTP Expired!" : "Invalid OTP";
-          setSnackbarMessage(errorMessage);
-          setSnackbarSeverity("warning");
-          setOpenSnackbar(true);
+     
+
+          setSnackbarConfig({
+            open :true, 
+            message: errorMessage, 
+            severity : 'warning'
+          })
           setIsOtpVerification(false);
         }
       })
       .catch((error) => {
-        setSnackbarMessage(error.response?.data?.detail || "Verification failed");
-        setSnackbarSeverity("error");
-        setOpenSnackbar(true);
+        setSnackbarConfig({
+          open: true, // Opens the Snackbar
+          message: error.response?.data?.detail || "Verification failed", // Displays the error message from the response or a default message
+          severity: "error", // Sets the severity to 'error' for styling
+        });
+        
         setIsOtpVerification(false);
       });
   };
 
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
 
   return (
     <Box
@@ -139,11 +152,15 @@ export default function OtpForm({ authToken, onResendOTP, timer, setTimer, isRes
           )}
         </Button>
       </form>
-      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: "100%" }}>
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+       {/* Conditionally Render Custom Snackbar */}
+       {snackbarConfig.open && (
+        <CustomSnackbar
+          open={snackbarConfig.open}
+          message={snackbarConfig.message}
+          severity={snackbarConfig.severity}
+          onClose={() => setSnackbarConfig({ ...snackbarConfig, open: false })}
+        />
+      )}
     </Box>
   );
 }

@@ -12,7 +12,7 @@ export default function Dashboard() {
   const token = Cookies.get('login_token_ipo');
   let { baskets, loading } = useSelector((store) => store.basketReducer);
 
-  console.log(baskets,"baskets")
+
 useEffect(()=>{
   if(token){
     dispatch(fetchIpoList(token))
